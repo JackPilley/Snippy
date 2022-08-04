@@ -6,10 +6,17 @@
 #include <Windows.h>
 #include <windowsx.h>
 #include <shellapi.h>
+#include <WinUser.h>
 
 #include <iostream>
 
 #include "PipWindow.h"
+
+#define WM_NOTIF_ICON_MSG WM_APP + 1
+
+
+HINSTANCE g_hInstance;
+
 
 // Windows uses different entry points depending on the subsystem being used. We use the console subsystem for debugging
 // which uses the main(...) entry point. Otherwise there's no difference for our purposes so we just immediately call
@@ -20,9 +27,12 @@ int WINAPI main(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, in
 }
 
 LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+void ShowContextMenu(HWND hwnd, POINT pt);
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow)
 {
+	g_hInstance = hInstance;
+
 	const wchar_t CLASS_NAME[] = L"MainClass";
 
 	WNDCLASS wc = {};
@@ -64,7 +74,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 	notifyIconData.uID = 1;
 	notifyIconData.hWnd = hwnd;
 	notifyIconData.uFlags = NIF_ICON | NIF_TIP | NIF_MESSAGE;
-	notifyIconData.uCallbackMessage = WM_APP + 1;
+	notifyIconData.uCallbackMessage = WM_NOTIF_ICON_MSG;
 	notifyIconData.hIcon = icon;
 	notifyIconData.uVersion = NOTIFYICON_VERSION_4;
 
@@ -87,13 +97,50 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 	return 0;
 }
 
+void ShowContextMenu(HWND hwnd, POINT pt)
+{
+	HMENU hMenu = CreatePopupMenu();
+	if (hMenu)
+	{
+		AppendMenu(hMenu, MF_ENABLED | MF_STRING, 1, L"Exit");
+
+		// our window must be foreground before calling TrackPopupMenu or the menu will not disappear when the user clicks away
+		SetForegroundWindow(hwnd);
+
+		// respect menu drop alignment
+		UINT uFlags = TPM_RIGHTBUTTON;
+		if (GetSystemMetrics(SM_MENUDROPALIGNMENT) != 0)
+		{
+			uFlags |= TPM_RIGHTALIGN;
+		}
+		else
+		{
+			uFlags |= TPM_LEFTALIGN;
+		}
+
+		TrackPopupMenuEx(hMenu, uFlags, pt.x, pt.y, hwnd, NULL);
+
+		DestroyMenu(hMenu);
+	}
+}
+
 LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-
 	switch (uMsg)
 	{
 	case WM_HOTKEY:
 		std::cout << "Pressed\n";
+		return 0;
+	case WM_NOTIF_ICON_MSG:
+		switch (LOWORD(lParam))
+		{
+		case WM_CONTEXTMENU:
+		{
+			POINT const pt = { LOWORD(wParam), HIWORD(wParam) };
+			ShowContextMenu(hwnd, pt);
+		}
+		break;
+		}
 		return 0;
 	default:
 		return DefWindowProc(hwnd, uMsg, wParam, lParam);
