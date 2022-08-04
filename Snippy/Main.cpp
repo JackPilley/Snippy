@@ -5,6 +5,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include <windowsx.h>
+#include <shellapi.h>
 
 #include <iostream>
 
@@ -55,6 +56,21 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 		return 0;
 	}
 
+	//To do, custom icon
+	HICON icon = LoadIcon(NULL, IDI_QUESTION);
+
+	NOTIFYICONDATA notifyIconData = {};
+	notifyIconData.cbSize = sizeof(notifyIconData);
+	notifyIconData.uID = 1;
+	notifyIconData.hWnd = hwnd;
+	notifyIconData.uFlags = NIF_ICON | NIF_TIP | NIF_MESSAGE;
+	notifyIconData.uCallbackMessage = WM_APP + 1;
+	notifyIconData.hIcon = icon;
+	notifyIconData.uVersion = NOTIFYICON_VERSION_4;
+
+	Shell_NotifyIcon(NIM_ADD, &notifyIconData);
+	Shell_NotifyIcon(NIM_SETVERSION, &notifyIconData);
+
 	// Register hotkey Ctrl-Shift-W. Using C would make more sense but it's taken by gyazo.
 	if (RegisterHotKey(hwnd, 1, MOD_CONTROL | MOD_SHIFT | MOD_NOREPEAT, 0x57))
 		std::cout << "Registered hotkey\n";
@@ -65,6 +81,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
 	}
+
+	Shell_NotifyIcon(NIM_DELETE, &notifyIconData);
 
 	return 0;
 }
