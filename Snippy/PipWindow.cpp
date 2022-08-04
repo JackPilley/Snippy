@@ -2,57 +2,30 @@
 #include <windowsx.h>
 #include <iostream>
 
-HCURSOR PipWindow::hArrowCursor{ 0 };
-bool PipWindow::s_classInitialized{ false };
-const wchar_t PipWindow::CLASS_NAME[] = L"PipClass";
-int PipWindow::s_instanceCount{ 0 };
-ATOM PipWindow::s_classAtom{ 0 };
-HINSTANCE PipWindow::s_hInstance{ 0 };
+HCURSOR PipWindow::hArrowCursor = {};
 
 void PipWindow::InitClass(HINSTANCE hInstance)
 {
-	PipWindow::s_hInstance = hInstance;
-
 	WNDCLASS wc = {};
 	wc.lpfnWndProc = PipWindow::PipWindowProc;
 	wc.hInstance = hInstance;
 	wc.lpszClassName = CLASS_NAME;
 
-	PipWindow::s_classAtom = RegisterClass(&wc);
+	RegisterClass(&wc);
 
-	if(PipWindow::s_classAtom == 0)
-		std::cout << "Error registering class: " << GetLastError() << '\n';
-
-	// It's fine if we load the cursor multiple times. The OS will just return the same handle each time
-	PipWindow::hArrowCursor = LoadCursor(NULL, MAKEINTRESOURCE(32512));
-
-	PipWindow::s_classInitialized = true;
+	hArrowCursor = LoadCursor(NULL, MAKEINTRESOURCE(32512));
 }
 
-void PipWindow::CleanupClass()
+HWND PipWindow::CreatePip(HINSTANCE hInstance)
 {
-	if (!UnregisterClass((LPCWSTR)PipWindow::s_classAtom, PipWindow::s_hInstance))
-		std::cout << "Error unregistering class: " << GetLastError() << '\n';
+	// This will be deleted when the window receives the destroy message
+	PipData* data = new PipData{};
 
-	PipWindow::s_hInstance = NULL;
-
-	PipWindow::s_classAtom = NULL;
-
-	PipWindow::s_classInitialized = false;
-}
-
-PipWindow::PipWindow(HINSTANCE hInstance)
-{
-	if (!PipWindow::s_classInitialized)
-		InitClass(hInstance);
-	++PipWindow::s_instanceCount;
-
-	hwnd = CreateWindowEx(
+	HWND hwnd = CreateWindowEx(
 		0,
 		CLASS_NAME,
 		L"Pip Window",
-		//WS_POPUP,
-		WS_OVERLAPPEDWINDOW,
+		WS_POPUP|WS_SYSMENU,
 
 		100,
 		100,
@@ -62,52 +35,54 @@ PipWindow::PipWindow(HINSTANCE hInstance)
 		NULL,
 		NULL,
 		hInstance,
-		this
+		data
 	);
 
 	if (hwnd == 0)
 	{
 		std::cout << "Error creating window: " << GetLastError() << '\n';
 		PostQuitMessage(0);
-		return;
+		return 0;
 	}
 
 	ShowWindow(hwnd, SW_SHOWDEFAULT);
 
-	tme = {};
+	//Track when the mouse leaves the window
+	TRACKMOUSEEVENT tme = {};
 	tme.cbSize = sizeof(TRACKMOUSEEVENT);
 	tme.dwFlags = TME_LEAVE;
 	tme.hwndTrack = hwnd;
 
 	TrackMouseEvent(&tme);
-}
 
+	data->hwnd = hwnd;
+	data->tme = tme;
 
-PipWindow::~PipWindow()
-{
-	if (--PipWindow::s_instanceCount == 0)
-		PipWindow::CleanupClass();
+	return hwnd;
 }
 
 LRESULT CALLBACK PipWindow::PipWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	PipWindow* window;
+	PipData* data;
 
+	// If the window is being created, associate the persistent data with it.
+	// Otherwise retrieve the data.
 	if (uMsg == WM_CREATE)
 	{
 		CREATESTRUCT* create = reinterpret_cast<CREATESTRUCT*>(lParam);
-		window = reinterpret_cast<PipWindow*>(create->lpCreateParams);
-		SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)window);
+		data = reinterpret_cast<PipData*>(create->lpCreateParams);
+		SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)data);
 	}
 	else
 	{
 		LONG_PTR ptr = GetWindowLongPtr(hwnd, GWLP_USERDATA);
-		window = reinterpret_cast<PipWindow*>(ptr);
+		data = reinterpret_cast<PipData*>(ptr);
 	}
 
 	switch (uMsg)
 	{
 	case WM_DESTROY:
+		delete data;
 		return 0;
 	case WM_PAINT:
 	{
@@ -119,10 +94,25 @@ LRESULT CALLBACK PipWindow::PipWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
 		return 0;
 	case WM_MOUSEMOVE:
 	{
-		int x = GET_X_LPARAM(lParam);
-		int y = GET_Y_LPARAM(lParam);
+		if (data->mouseOver == false)
+		{
+			data->mouseOver = true;
+			TrackMouseEvent(&data->tme);
 
-		std::cout << x << " " << y << '\n';
+			//SetWindowLongPtr(hwnd, GWL_STYLE, WS_OVERLAPPEDWINDOW);
+			//ShowWindow(hwnd, SW_SHOWDEFAULT);
+		}
+
+		if (data->mouseDown)
+		{
+			RECT windowRect;
+			GetWindowRect(hwnd, &windowRect);
+
+			POINT mousePoint;
+			GetCursorPos(&mousePoint);
+
+			SetWindowPos(hwnd, HWND_TOPMOST, mousePoint.x - data->moveOffsetX, mousePoint.y - data->moveOffsetY, 0, 0, SWP_NOSIZE);
+		}
 
 		SetCursor(hArrowCursor);
 
@@ -131,6 +121,37 @@ LRESULT CALLBACK PipWindow::PipWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
 	case WM_MOUSELEAVE:
 	{
 		std::cout << "Out!\n";
+
+		//SetWindowLongPtr(hwnd, GWL_STYLE, WS_POPUP);
+		//ShowWindow(hwnd, SW_SHOWDEFAULT);
+
+		data->mouseOver = false;
+		return 0;
+	}
+	case WM_LBUTTONDOWN:
+	{
+		RECT windowRect;
+		GetWindowRect(hwnd, &windowRect);
+
+		POINT mousePoint;
+		GetCursorPos(&mousePoint);
+
+		data->moveOffsetX = mousePoint.x - windowRect.left;
+		data->moveOffsetY = mousePoint.y - windowRect.top;
+		data->mouseDown = true;
+
+		std::cout << "Down\n";
+
+		return 0;
+	}
+	case WM_LBUTTONUP:
+	{
+		data->mouseDown = false;
+		return 0;
+	}
+	case WM_MBUTTONDOWN:
+	{
+		DestroyWindow(hwnd);
 		return 0;
 	}
 	default:

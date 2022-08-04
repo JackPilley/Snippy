@@ -2,42 +2,35 @@
 
 #include <Windows.h>
 
-class PipWindow {
-private:
+namespace PipWindow
+{
+	// Data tracked per window
+	struct PipData
+	{
+		// Handle of the window
+		HWND hwnd;
+		// Windows stops sending mouse leave events after the first one, so we need to use this struct
+		// to re-enable those events when the mouse enters the window again
+		TRACKMOUSEEVENT tme;
 
-	// Static data that is shared across instances.
-	// Has the window class been registered with the OS? Note this is different from a C++ class
-	static bool s_classInitialized;
-	static const wchar_t CLASS_NAME[];
-	//Handle to the module that created the window
-	static HINSTANCE s_hInstance;
-	//Unique ATOM used to identify the window class
-	static ATOM s_classAtom;
-	// How many instances of our class exist. If this reaches zero then the window class gets cleaned up
-	static int s_instanceCount;
+		// Mouse offset from the origin of the window
+		int moveOffsetX;
+		int moveOffsetY;
 
-	// Handle to the standard arrow pointer cursor. Note this doesn't get unloaded when the class is cleaned up because
-	// it's not associated with the window class, and also there's no way to unload a cursor.
-	static HCURSOR hArrowCursor;
+		// Is the mouse over the window
+		bool mouseOver;
+		// Is the left mouse button down
+		bool mouseDown;
+	};
 
-	// Register the window class with the OS
-	static void InitClass(HINSTANCE hInstance);
-	// Clean up the window class
-	static void CleanupClass();
+	const wchar_t CLASS_NAME[] = L"PipClass";
+	//We need to set the cursor when it enters the window
+	extern HCURSOR hArrowCursor;
 
-	// Handle to the window
-	HWND hwnd;
-	TRACKMOUSEEVENT tme;
-
-	int mousedownX;
-	int mousedownY;
-	bool mouseOver;
-
-public:
-	// We must have an HINSTANCE to create our window
-	PipWindow() = delete;
-	PipWindow(HINSTANCE hInstance);
-	~PipWindow();
-
-	static LRESULT CALLBACK PipWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-};
+	// Registers the window class with the OS. Should be called only once.
+	void InitClass(HINSTANCE hInstance);
+	// Create an instance of a pip window
+	HWND CreatePip(HINSTANCE hInstance);
+	// Message handling for pip windows
+	LRESULT CALLBACK PipWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+}

@@ -13,7 +13,7 @@
 #include "PipWindow.h"
 
 #define WM_NOTIF_ICON_MSG WM_APP + 1
-
+#define MENU_EXIT 1
 
 HINSTANCE g_hInstance;
 
@@ -32,6 +32,9 @@ void ShowContextMenu(HWND hwnd, POINT pt);
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow)
 {
 	g_hInstance = hInstance;
+
+	PipWindow::InitClass(hInstance);
+	PipWindow::CreatePip(hInstance);
 
 	const wchar_t CLASS_NAME[] = L"MainClass";
 
@@ -102,7 +105,7 @@ void ShowContextMenu(HWND hwnd, POINT pt)
 	HMENU hMenu = CreatePopupMenu();
 	if (hMenu)
 	{
-		AppendMenu(hMenu, MF_ENABLED | MF_STRING, 1, L"Exit");
+		AppendMenu(hMenu, MF_ENABLED | MF_STRING, MENU_EXIT, L"Exit");
 
 		// our window must be foreground before calling TrackPopupMenu or the menu will not disappear when the user clicks away
 		SetForegroundWindow(hwnd);
@@ -142,6 +145,17 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 		break;
 		}
 		return 0;
+	case WM_COMMAND:
+	{
+		switch (LOWORD(wParam))
+		{
+		case MENU_EXIT:
+		{
+			PostQuitMessage(0);
+		}
+		break;
+		}
+	}
 	default:
 		return DefWindowProc(hwnd, uMsg, wParam, lParam);
 	}
