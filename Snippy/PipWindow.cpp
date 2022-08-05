@@ -42,8 +42,7 @@ HWND PipWindow::CreatePip(HINSTANCE hInstance)
 	if (hwnd == 0)
 	{
 		std::cout << "Error creating window: " << GetLastError() << '\n';
-		PostQuitMessage(0);
-		return 0;
+		return hwnd;
 	}
 
 	ShowWindow(hwnd, SW_SHOWDEFAULT);
@@ -81,7 +80,7 @@ LRESULT CALLBACK PipWindow::PipWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
 
 		HBITMAP bitmap = CreateCompatibleBitmap(screen, 800, 600);
 
-		SelectObject(memDC, bitmap);
+		HGDIOBJ old = SelectObject(memDC, bitmap);
 
 		BitBlt(
 			memDC,
@@ -94,6 +93,7 @@ LRESULT CALLBACK PipWindow::PipWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
 
 		data->image = bitmap;
 
+		SelectObject(memDC, old);
 		DeleteObject(memDC);
 
 		ReleaseDC(NULL, screen);
@@ -119,12 +119,18 @@ LRESULT CALLBACK PipWindow::PipWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
 		FillRect(hdc, &ps.rcPaint, (HBRUSH)(COLOR_WINDOW + 1));
 		
 		HDC memDC = CreateCompatibleDC(hdc);
-		SelectObject(memDC, data->image);
+		HGDIOBJ old = SelectObject(memDC, data->image);
 
 		BitBlt(
-			hdc, 0, 0, 800, 600, memDC, 0, 0, SRCCOPY
+			hdc,
+			0, 0,
+			800, 600,
+			memDC,
+			0, 0,
+			SRCCOPY
 		);
 
+		SelectObject(memDC, old);
 		DeleteObject(memDC);
 
 		EndPaint(hwnd, &ps);
