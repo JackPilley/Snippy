@@ -25,6 +25,7 @@ HWND PipWindow::CreatePip(HINSTANCE hInstance)
 		0,
 		CLASS_NAME,
 		L"Pip Window",
+		// Borderless and non-resizeable
 		WS_POPUP|WS_SYSMENU,
 
 		100,
@@ -63,7 +64,7 @@ HWND PipWindow::CreatePip(HINSTANCE hInstance)
 
 LRESULT CALLBACK PipWindow::PipWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	PipData* data;
+	PipData* data{};
 
 	// If the window is being created, associate the persistent data with it.
 	// Otherwise retrieve the data.
@@ -72,6 +73,32 @@ LRESULT CALLBACK PipWindow::PipWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
 		CREATESTRUCT* create = reinterpret_cast<CREATESTRUCT*>(lParam);
 		data = reinterpret_cast<PipData*>(create->lpCreateParams);
 		SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)data);
+
+		HDC screen = GetDC(NULL);
+		HDC window = GetDC(hwnd);
+
+		HDC memDC = CreateCompatibleDC(window);
+
+		HBITMAP bitmap = CreateCompatibleBitmap(screen, 800, 600);
+
+		SelectObject(memDC, bitmap);
+
+		BitBlt(
+			memDC,
+			0, 0,
+			800, 600,
+			screen,
+			0, 0,
+			SRCCOPY
+		);
+
+		data->image = bitmap;
+
+		DeleteObject(memDC);
+
+		ReleaseDC(NULL, screen);
+		ReleaseDC(hwnd, window);
+
 	}
 	else
 	{
@@ -82,6 +109,7 @@ LRESULT CALLBACK PipWindow::PipWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
 	switch (uMsg)
 	{
 	case WM_DESTROY:
+		DeleteObject(data->image);
 		delete data;
 		return 0;
 	case WM_PAINT:
@@ -89,18 +117,26 @@ LRESULT CALLBACK PipWindow::PipWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
 		PAINTSTRUCT ps;
 		HDC hdc = BeginPaint(hwnd, &ps);
 		FillRect(hdc, &ps.rcPaint, (HBRUSH)(COLOR_WINDOW + 1));
+		
+		HDC memDC = CreateCompatibleDC(hdc);
+		SelectObject(memDC, data->image);
+
+		BitBlt(
+			hdc, 0, 0, 800, 600, memDC, 0, 0, SRCCOPY
+		);
+
+		DeleteObject(memDC);
+
 		EndPaint(hwnd, &ps);
 	}
 		return 0;
 	case WM_MOUSEMOVE:
 	{
+		// If the mouse is entering the window after leaving it
 		if (data->mouseOver == false)
 		{
 			data->mouseOver = true;
 			TrackMouseEvent(&data->tme);
-
-			//SetWindowLongPtr(hwnd, GWL_STYLE, WS_OVERLAPPEDWINDOW);
-			//ShowWindow(hwnd, SW_SHOWDEFAULT);
 		}
 
 		if (data->mouseDown)
@@ -120,12 +156,10 @@ LRESULT CALLBACK PipWindow::PipWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
 	}
 	case WM_MOUSELEAVE:
 	{
-		std::cout << "Out!\n";
-
-		//SetWindowLongPtr(hwnd, GWL_STYLE, WS_POPUP);
-		//ShowWindow(hwnd, SW_SHOWDEFAULT);
-
 		data->mouseOver = false;
+		// Stops the window from getting weirdly stuck to the cursor if they move it too fast
+		// and the cursor is near the edge of the window
+		data->mouseDown = false;
 		return 0;
 	}
 	case WM_LBUTTONDOWN:
@@ -139,8 +173,6 @@ LRESULT CALLBACK PipWindow::PipWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
 		data->moveOffsetX = mousePoint.x - windowRect.left;
 		data->moveOffsetY = mousePoint.y - windowRect.top;
 		data->mouseDown = true;
-
-		std::cout << "Down\n";
 
 		return 0;
 	}

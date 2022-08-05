@@ -13,7 +13,7 @@ namespace PipWindow
 		// to re-enable those events when the mouse enters the window again
 		TRACKMOUSEEVENT tme;
 
-		// Mouse offset from the origin of the window
+		// Mouse offset from the origin of the window when the left mouse button was pressed
 		int moveOffsetX;
 		int moveOffsetY;
 
@@ -21,6 +21,8 @@ namespace PipWindow
 		bool mouseOver;
 		// Is the left mouse button down
 		bool mouseDown;
+
+		HBITMAP image;
 	};
 
 	const wchar_t CLASS_NAME[] = L"PipClass";

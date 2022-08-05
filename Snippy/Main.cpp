@@ -34,7 +34,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 	g_hInstance = hInstance;
 
 	PipWindow::InitClass(hInstance);
-	PipWindow::CreatePip(hInstance);
 
 	const wchar_t CLASS_NAME[] = L"MainClass";
 
@@ -85,6 +84,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 	Shell_NotifyIcon(NIM_SETVERSION, &notifyIconData);
 
 	// Register hotkey Ctrl-Shift-W. Using C would make more sense but it's taken by gyazo.
+	// 0x57 is the key code for W
 	if (RegisterHotKey(hwnd, 1, MOD_CONTROL | MOD_SHIFT | MOD_NOREPEAT, 0x57))
 		std::cout << "Registered hotkey\n";
 
@@ -105,7 +105,7 @@ void ShowContextMenu(HWND hwnd, POINT pt)
 	HMENU hMenu = CreatePopupMenu();
 	if (hMenu)
 	{
-		AppendMenu(hMenu, MF_ENABLED | MF_STRING, MENU_EXIT, L"Exit");
+		AppendMenu(hMenu, MF_ENABLED | MF_STRING, MENU_EXIT, L"Exit"); 
 
 		// our window must be foreground before calling TrackPopupMenu or the menu will not disappear when the user clicks away
 		SetForegroundWindow(hwnd);
@@ -132,7 +132,7 @@ LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 	switch (uMsg)
 	{
 	case WM_HOTKEY:
-		std::cout << "Pressed\n";
+		PipWindow::CreatePip(g_hInstance);
 		return 0;
 	case WM_NOTIF_ICON_MSG:
 		switch (LOWORD(lParam))
