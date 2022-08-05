@@ -10,13 +10,8 @@
 
 #include <iostream>
 
+#include "MainWindow.h"
 #include "PipWindow.h"
-
-#define WM_NOTIF_ICON_MSG WM_APP + 1
-#define MENU_EXIT 1
-
-HINSTANCE g_hInstance;
-
 
 // Windows uses different entry points depending on the subsystem being used. We use the console subsystem for debugging
 // which uses the main(...) entry point. Otherwise there's no difference for our purposes so we just immediately call
@@ -26,47 +21,13 @@ int WINAPI main(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, in
 	return wWinMain(hInstance, hPrevInstance, pCmdLine, nCmdShow);
 }
 
-LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-void ShowContextMenu(HWND hwnd, POINT pt);
-
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow)
 {
-	g_hInstance = hInstance;
-
 	PipWindow::InitClass(hInstance);
 
-	const wchar_t CLASS_NAME[] = L"MainClass";
+	MainWindow::InitClass(hInstance);
 
-	WNDCLASS wc = {};
-	wc.lpfnWndProc = MainWindowProc;
-	wc.hInstance = hInstance;
-	wc.lpszClassName = CLASS_NAME;
-
-	RegisterClass(&wc);
-
-	HWND hwnd = CreateWindowEx(
-		0,
-		CLASS_NAME,
-		L"Main Window",
-		0,
-
-		0,
-		0,
-		0,
-		0,
-
-		NULL,
-		NULL,
-		hInstance,
-		NULL
-	);
-
-	if (hwnd == 0)
-	{
-		std::cout << "Error creating window: " << GetLastError() << '\n';
-		PostQuitMessage(0);
-		return 0;
-	}
+	HWND hwnd = MainWindow::CreateMainWindow(hInstance);
 
 	//To do, custom icon
 	HICON icon = LoadIcon(NULL, IDI_QUESTION);
@@ -98,65 +59,4 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 	Shell_NotifyIcon(NIM_DELETE, &notifyIconData);
 
 	return 0;
-}
-
-void ShowContextMenu(HWND hwnd, POINT pt)
-{
-	HMENU hMenu = CreatePopupMenu();
-	if (hMenu)
-	{
-		AppendMenu(hMenu, MF_ENABLED | MF_STRING, MENU_EXIT, L"Exit"); 
-
-		// our window must be foreground before calling TrackPopupMenu or the menu will not disappear when the user clicks away
-		SetForegroundWindow(hwnd);
-
-		// respect menu drop alignment
-		UINT uFlags = TPM_RIGHTBUTTON;
-		if (GetSystemMetrics(SM_MENUDROPALIGNMENT) != 0)
-		{
-			uFlags |= TPM_RIGHTALIGN;
-		}
-		else
-		{
-			uFlags |= TPM_LEFTALIGN;
-		}
-
-		TrackPopupMenuEx(hMenu, uFlags, pt.x, pt.y, hwnd, NULL);
-
-		DestroyMenu(hMenu);
-	}
-}
-
-LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-	switch (uMsg)
-	{
-	case WM_HOTKEY:
-		PipWindow::CreatePip(g_hInstance);
-		return 0;
-	case WM_NOTIF_ICON_MSG:
-		switch (LOWORD(lParam))
-		{
-		case WM_CONTEXTMENU:
-		{
-			POINT const pt = { LOWORD(wParam), HIWORD(wParam) };
-			ShowContextMenu(hwnd, pt);
-		}
-		break;
-		}
-		return 0;
-	case WM_COMMAND:
-	{
-		switch (LOWORD(wParam))
-		{
-		case MENU_EXIT:
-		{
-			PostQuitMessage(0);
-		}
-		break;
-		}
-	}
-	default:
-		return DefWindowProc(hwnd, uMsg, wParam, lParam);
-	}
 }
