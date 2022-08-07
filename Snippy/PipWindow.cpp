@@ -16,7 +16,7 @@ void PipWindow::InitClass(HINSTANCE hInstance)
 	hArrowCursor = LoadCursor(NULL, MAKEINTRESOURCE(32512));
 }
 
-HWND PipWindow::CreatePip(HINSTANCE hInstance)
+HWND PipWindow::CreatePip(HINSTANCE hInstance, int x, int y, int w, int h, HBITMAP image)
 {
 	// This will be deleted when the window receives the destroy message
 	PipData* data = new PipData{};
@@ -28,10 +28,8 @@ HWND PipWindow::CreatePip(HINSTANCE hInstance)
 		// Borderless and non-resizeable
 		WS_POPUP|WS_SYSMENU,
 
-		100,
-		100,
-		800,
-		600,
+		x, y,
+		w, h,
 
 		NULL,
 		NULL,
@@ -57,6 +55,7 @@ HWND PipWindow::CreatePip(HINSTANCE hInstance)
 
 	data->hwnd = hwnd;
 	data->tme = tme;
+	data->image = image;
 
 	return hwnd;
 }
@@ -72,32 +71,6 @@ LRESULT CALLBACK PipWindow::PipWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
 		CREATESTRUCT* create = reinterpret_cast<CREATESTRUCT*>(lParam);
 		data = reinterpret_cast<PipData*>(create->lpCreateParams);
 		SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)data);
-
-		HDC screen = GetDC(NULL);
-		HDC window = GetDC(hwnd);
-
-		HDC memDC = CreateCompatibleDC(window);
-
-		HBITMAP bitmap = CreateCompatibleBitmap(screen, 800, 600);
-
-		HGDIOBJ old = SelectObject(memDC, bitmap);
-
-		BitBlt(
-			memDC,
-			0, 0,
-			800, 600,
-			screen,
-			0, 0,
-			SRCCOPY
-		);
-
-		data->image = bitmap;
-
-		SelectObject(memDC, old);
-		DeleteObject(memDC);
-
-		ReleaseDC(NULL, screen);
-		ReleaseDC(hwnd, window);
 
 	}
 	else
@@ -121,10 +94,16 @@ LRESULT CALLBACK PipWindow::PipWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
 		HDC memDC = CreateCompatibleDC(hdc);
 		HGDIOBJ old = SelectObject(memDC, data->image);
 
+		RECT rect = {};
+
+		GetWindowRect(hwnd, &rect);
+		int w = rect.right - rect.left;
+		int h = rect.bottom - rect.top;
+
 		BitBlt(
 			hdc,
 			0, 0,
-			800, 600,
+			w, h,
 			memDC,
 			0, 0,
 			SRCCOPY

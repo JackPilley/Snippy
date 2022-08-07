@@ -32,7 +32,7 @@ namespace PipWindow
 	// Registers the window class with the OS. Should be called only once.
 	void InitClass(HINSTANCE hInstance);
 	// Create an instance of a pip window
-	HWND CreatePip(HINSTANCE hInstance);
+	HWND CreatePip(HINSTANCE hInstance, int x, int y, int w, int h, HBITMAP image);
 	// Message handling for pip windows
 	LRESULT CALLBACK PipWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 }

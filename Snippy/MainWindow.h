@@ -10,6 +10,14 @@ namespace MainWindow
 	struct MainData
 	{
 		HINSTANCE hInstance;
+		
+		bool mouseDown;
+
+		int originX;
+		int originY;
+		
+		bool windowShown;
+		HBITMAP image;
 	};
 
 	const wchar_t CLASS_NAME[] = L"MainClass";
@@ -21,6 +29,8 @@ namespace MainWindow
 	// Create an instance of a pip window
 	HWND CreateMainWindow(HINSTANCE hInstance);
 
+	//Copies the current screen into a bitmap and returns a handle to the bitmap. Also shows the main window fir displaying the bitmap
+	HBITMAP CopyAndDisplayScreen(HWND hwnd);
 	// Message handling for the main window
 	LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
