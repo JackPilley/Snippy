@@ -23,8 +23,8 @@ int WINAPI main(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, in
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow)
 {
+	//Register window classes with Windows
 	PipWindow::InitClass(hInstance);
-
 	MainWindow::InitClass(hInstance);
 
 	HWND hwnd = MainWindow::CreateMainWindow(hInstance);
@@ -32,6 +32,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 	//To do, custom icon
 	HICON icon = LoadIcon(NULL, IDI_QUESTION);
 
+	//Set up notification icon (tray icon)
 	NOTIFYICONDATA notifyIconData = {};
 	notifyIconData.cbSize = sizeof(notifyIconData);
 	notifyIconData.uID = 1;

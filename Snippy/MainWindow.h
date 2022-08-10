@@ -15,14 +15,18 @@ namespace MainWindow
 
 		int originX;
 		int originY;
+
+		int previousX;
+		int previousY;
 		
 		bool windowShown;
 		HBITMAP image;
 	};
 
 	const wchar_t CLASS_NAME[] = L"MainClass";
+	
 	//We need to set the cursor when it enters the window
-	extern HCURSOR hArrowCursor;
+	extern HCURSOR hSelectCursor;
 
 	// Registers the window class with the OS. Should be called only once.
 	void InitClass(HINSTANCE hInstance);

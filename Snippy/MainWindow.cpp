@@ -4,12 +4,17 @@
 #include "PipWindow.h"
 #include <windowsx.h>
 
+HCURSOR MainWindow::hSelectCursor = {};
+
 void MainWindow::InitClass(HINSTANCE hInstance)
 {
+	hSelectCursor = LoadCursor(NULL, IDC_CROSS);
+
 	WNDCLASS wc = {};
 	wc.lpfnWndProc = MainWindow::MainWindowProc;
 	wc.hInstance = hInstance;
 	wc.lpszClassName = CLASS_NAME;
+	wc.hCursor = hSelectCursor;
 
 	RegisterClass(&wc);
 }
@@ -180,11 +185,94 @@ LRESULT CALLBACK MainWindow::MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
 
 		return 0;
 	}
+	case WM_MOUSEMOVE:
+	{
+		if (data->mouseDown)
+		{
+			int originX = data->originX;
+			int originY = data->originY;
+
+			int endX = data->previousX;
+			int endY = data->previousY;
+
+			int temp;
+
+			//Make sure the origin is the top left corner
+			if (endX < originX)
+			{
+				temp = endX;
+				endX = originX;
+				originX = temp;
+			}
+
+			if (endY < originY)
+			{
+				temp = endY;
+				endY = originY;
+				originY = temp;
+			}
+
+			//Minimum is 20x20 pixels so there's room for the close button
+			int w = max(endX - originX, 20);
+			int h = max(endY - originY, 20);
+
+			HDC hdc = GetDC(hwnd);
+
+			HDC memDC = CreateCompatibleDC(hdc);
+			HGDIOBJ old = SelectObject(memDC, data->image);
+
+			BitBlt(
+				hdc,
+				originX, originY,
+				w, h,
+				memDC,
+				originX, originY,
+				SRCCOPY
+			);
+
+			data->previousX = endX = GET_X_LPARAM(lParam);
+			data->previousY = endY = GET_Y_LPARAM(lParam);
+
+			//Make sure the origin is the top left corner
+			if (endX < originX)
+			{
+				temp = endX;
+				endX = originX;
+				originX = temp;
+			}
+
+			if (endY < originY)
+			{
+				temp = endY;
+				endY = originY;
+				originY = temp;
+			}
+
+			//Minimum is 20x20 pixels so there's room for the close button
+			w = max(endX - originX, 20);
+			h = max(endY - originY, 20);
+
+			BitBlt(
+				hdc,
+				originX, originY,
+				w, h,
+				memDC,
+				originX, originY,
+				SRCINVERT
+			);
+
+			SelectObject(memDC, old);
+			DeleteObject(memDC);
+		}
+		return 0;
+	}
 	case WM_LBUTTONDOWN:
 	{
 		data->mouseDown = true;
 		data->originX = GET_X_LPARAM(lParam);
 		data->originY = GET_Y_LPARAM(lParam);
+		data->previousX = GET_X_LPARAM(lParam);
+		data->previousY = GET_Y_LPARAM(lParam);
 		return 0;
 	}
 	case WM_LBUTTONUP:

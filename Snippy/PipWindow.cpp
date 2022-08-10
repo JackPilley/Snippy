@@ -6,14 +6,15 @@ HCURSOR PipWindow::hArrowCursor = {};
 
 void PipWindow::InitClass(HINSTANCE hInstance)
 {
+	hArrowCursor = LoadCursor(NULL, IDC_ARROW);
+
 	WNDCLASS wc = {};
 	wc.lpfnWndProc = PipWindow::PipWindowProc;
 	wc.hInstance = hInstance;
 	wc.lpszClassName = CLASS_NAME;
+	wc.hCursor = hArrowCursor;
 
 	RegisterClass(&wc);
-
-	hArrowCursor = LoadCursor(NULL, MAKEINTRESOURCE(32512));
 }
 
 HWND PipWindow::CreatePip(HINSTANCE hInstance, int x, int y, int w, int h, HBITMAP image)
@@ -27,6 +28,7 @@ HWND PipWindow::CreatePip(HINSTANCE hInstance, int x, int y, int w, int h, HBITM
 		L"Pip Window",
 		// Borderless and non-resizeable
 		WS_POPUP|WS_SYSMENU,
+		//WS_OVERLAPPEDWINDOW,
 
 		x, y,
 		w, h,
@@ -134,8 +136,6 @@ LRESULT CALLBACK PipWindow::PipWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
 
 			SetWindowPos(hwnd, HWND_TOPMOST, mousePoint.x - data->moveOffsetX, mousePoint.y - data->moveOffsetY, 0, 0, SWP_NOSIZE);
 		}
-
-		SetCursor(hArrowCursor);
 
 		return 0;
 	}
