@@ -21,6 +21,7 @@ namespace MainWindow
 		
 		bool windowShown;
 		HBITMAP image;
+		HBITMAP buffer;
 	};
 
 	const wchar_t CLASS_NAME[] = L"MainClass";
@@ -34,7 +35,7 @@ namespace MainWindow
 	HWND CreateMainWindow(HINSTANCE hInstance);
 
 	//Copies the current screen into a bitmap and returns a handle to the bitmap. Also shows the main window fir displaying the bitmap
-	HBITMAP CopyAndDisplayScreen(HWND hwnd);
+	void CopyAndDisplayScreen(HWND hwnd, MainData& data);
 	// Message handling for the main window
 	LRESULT CALLBACK MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 

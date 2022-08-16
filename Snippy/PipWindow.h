@@ -26,6 +26,7 @@ namespace PipWindow
 	};
 
 	const wchar_t CLASS_NAME[] = L"PipClass";
+	const int MIN_SIZE = 50;
 	//We need to set the cursor when it enters the window
 	extern HCURSOR hArrowCursor;
 

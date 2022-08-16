@@ -28,7 +28,7 @@ HWND MainWindow::CreateMainWindow(HINSTANCE hInstance)
 	HWND hwnd = CreateWindowEx(
 		0,
 		CLASS_NAME,
-		L"Main Window",
+		L"Snippy",
 		// Borderless and non-resizeable
 		WS_POPUP | WS_SYSMENU,
 
@@ -46,20 +46,12 @@ HWND MainWindow::CreateMainWindow(HINSTANCE hInstance)
 	return hwnd;
 }
 
-HBITMAP MainWindow::CopyAndDisplayScreen(HWND hwnd)
+void MainWindow::CopyAndDisplayScreen(HWND hwnd, MainData& data)
 {
 	int x = GetSystemMetrics(SM_XVIRTUALSCREEN);
 	int y = GetSystemMetrics(SM_YVIRTUALSCREEN);
 	int w = GetSystemMetrics(SM_CXVIRTUALSCREEN);
 	int h = GetSystemMetrics(SM_CYVIRTUALSCREEN);
-
-	SetWindowPos(
-		hwnd,
-		NULL,
-		x, y,
-		w, h,
-		SWP_SHOWWINDOW
-	);
 
 	// Save a copy of the current screen image
 	HDC screen = GetDC(NULL);
@@ -68,8 +60,20 @@ HBITMAP MainWindow::CopyAndDisplayScreen(HWND hwnd)
 	HDC memDC = CreateCompatibleDC(window);
 
 	HBITMAP bitmap = CreateCompatibleBitmap(screen, w, h);
+	HBITMAP buffer = CreateCompatibleBitmap(screen, w, h);
 
 	HGDIOBJ old = SelectObject(memDC, bitmap);
+
+	BitBlt(
+		memDC,
+		0, 0,
+		w, h,
+		screen,
+		0, 0,
+		SRCCOPY
+	);
+
+	SelectObject(memDC, buffer);
 
 	BitBlt(
 		memDC,
@@ -86,7 +90,17 @@ HBITMAP MainWindow::CopyAndDisplayScreen(HWND hwnd)
 	ReleaseDC(NULL, screen);
 	ReleaseDC(hwnd, window);
 
-	return bitmap;
+	data.image = bitmap;
+	data.buffer = buffer;
+
+
+	SetWindowPos(
+		hwnd,
+		NULL,
+		x, y,
+		w, h,
+		SWP_SHOWWINDOW
+	);
 }
 
 
@@ -113,18 +127,16 @@ LRESULT CALLBACK MainWindow::MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
 	{
 	case WM_DESTROY:
 	{
+		DeleteObject(data->image);
+		DeleteObject(data->buffer);
 		delete data;
 		return 0;
 	}
 	case WM_HOTKEY:
 	{
-		//POINT pos = {};
-		//GetCursorPos(&pos);
-		//PipWindow::CreatePip(data->hInstance, pos.x, pos.y, 800, 600);
-
 		if (data->windowShown) return 0;
 
-		data->image = CopyAndDisplayScreen(hwnd);
+		CopyAndDisplayScreen(hwnd, *data);
 
 		data->windowShown = true;
 		//This should already be false, but it's convenient to set it again here in case something went wrong previously
@@ -155,7 +167,7 @@ LRESULT CALLBACK MainWindow::MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
 		}
 		return 0;
 	}
-	case WM_PAINT:
+	/*case WM_PAINT:
 	{
 		PAINTSTRUCT ps;
 		HDC hdc = BeginPaint(hwnd, &ps);
@@ -184,7 +196,7 @@ LRESULT CALLBACK MainWindow::MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
 		EndPaint(hwnd, &ps);
 
 		return 0;
-	}
+	}*/
 	case WM_MOUSEMOVE:
 	{
 		if (data->mouseDown)
@@ -197,35 +209,24 @@ LRESULT CALLBACK MainWindow::MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
 
 			int temp;
 
-			//Make sure the origin is the top left corner
-			if (endX < originX)
-			{
-				temp = endX;
-				endX = originX;
-				originX = temp;
-			}
+			int w = endX - originX;
+			int h = endY - originY;
 
-			if (endY < originY)
-			{
-				temp = endY;
-				endY = originY;
-				originY = temp;
-			}
-
-			//Minimum is 20x20 pixels so there's room for the close button
-			int w = max(endX - originX, 20);
-			int h = max(endY - originY, 20);
+			w = w >= 0 ? max(w, PipWindow::MIN_SIZE) : min(w, -PipWindow::MIN_SIZE);
+			h = h >= 0 ? max(h, PipWindow::MIN_SIZE) : min(h, -PipWindow::MIN_SIZE);
 
 			HDC hdc = GetDC(hwnd);
 
-			HDC memDC = CreateCompatibleDC(hdc);
-			HGDIOBJ old = SelectObject(memDC, data->image);
+			HDC imageDC = CreateCompatibleDC(hdc);
+			HDC bufferDC = CreateCompatibleDC(hdc);
+			HGDIOBJ oldImageSelection = SelectObject(imageDC, data->image);
+			HGDIOBJ oldBufferSelection = SelectObject(bufferDC, data->buffer);
 
 			BitBlt(
-				hdc,
+				bufferDC,
 				originX, originY,
 				w, h,
-				memDC,
+				imageDC,
 				originX, originY,
 				SRCCOPY
 			);
@@ -233,36 +234,36 @@ LRESULT CALLBACK MainWindow::MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
 			data->previousX = endX = GET_X_LPARAM(lParam);
 			data->previousY = endY = GET_Y_LPARAM(lParam);
 
-			//Make sure the origin is the top left corner
-			if (endX < originX)
-			{
-				temp = endX;
-				endX = originX;
-				originX = temp;
-			}
+			//Make sure there's room for the close button
+			w = endX - originX;
+			h = endY - originY;
 
-			if (endY < originY)
-			{
-				temp = endY;
-				endY = originY;
-				originY = temp;
-			}
-
-			//Minimum is 20x20 pixels so there's room for the close button
-			w = max(endX - originX, 20);
-			h = max(endY - originY, 20);
+			w = w >= 0 ? max(w, PipWindow::MIN_SIZE) : min(w, -PipWindow::MIN_SIZE);
+			h = h >= 0 ? max(h, PipWindow::MIN_SIZE) : min(h, -PipWindow::MIN_SIZE);
 
 			BitBlt(
-				hdc,
+				bufferDC,
 				originX, originY,
 				w, h,
-				memDC,
+				imageDC,
 				originX, originY,
 				SRCINVERT
 			);
 
-			SelectObject(memDC, old);
-			DeleteObject(memDC);
+			BitBlt(
+				hdc,
+				0,0,
+				GetDeviceCaps(hdc, HORZRES), GetDeviceCaps(hdc, VERTRES),
+				bufferDC,
+				0,0,
+				SRCCOPY
+			);
+
+			SelectObject(imageDC, oldImageSelection);
+			DeleteObject(imageDC);
+
+			SelectObject(bufferDC, oldBufferSelection);
+			DeleteObject(bufferDC);
 		}
 		return 0;
 	}
@@ -302,9 +303,9 @@ LRESULT CALLBACK MainWindow::MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
 			originY = temp;
 		}
 
-		//Minimum is 20x20 pixels so there's room for the close button
-		int w = max(endX - originX, 20);
-		int h = max(endY - originY, 20);
+		//Make sure there's room for the close button
+		int w = max(endX - originX, PipWindow::MIN_SIZE);
+		int h = max(endY - originY, PipWindow::MIN_SIZE);
 
 		HDC window = GetDC(hwnd);
 
