@@ -84,6 +84,9 @@ LRESULT CALLBACK PipWindow::PipWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
 	switch (uMsg)
 	{
 	case WM_DESTROY:
+		//Let the main window know the pip is being destroyed
+		SendMessage(data->mainWin, WM_PIP_DESTROYED, 0, (LPARAM)hwnd);
+
 		DeleteObject(data->image);
 		delete data;
 		return 0;
