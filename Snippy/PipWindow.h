@@ -2,13 +2,15 @@
 
 #include <Windows.h>
 
+#define WM_PIP_DESTROYED WM_APP + 2
+
 namespace PipWindow
 {
 	// Data tracked per window
 	struct PipData
 	{
-		// Handle of the window
-		HWND hwnd;
+		// Handle of the main window
+		HWND mainWin;
 		// Windows stops sending mouse leave events after the first one, so we need to use this struct
 		// to re-enable those events when the mouse enters the window again
 		TRACKMOUSEEVENT tme;
@@ -33,7 +35,7 @@ namespace PipWindow
 	// Registers the window class with the OS. Should be called only once.
 	void InitClass(HINSTANCE hInstance);
 	// Create an instance of a pip window
-	HWND CreatePip(HINSTANCE hInstance, int x, int y, int w, int h, HBITMAP image);
+	HWND CreatePip(HINSTANCE hInstance, HWND mainWindow, int x, int y, int w, int h, HBITMAP image);
 	// Message handling for pip windows
 	LRESULT CALLBACK PipWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 }

@@ -17,7 +17,7 @@ void PipWindow::InitClass(HINSTANCE hInstance)
 	RegisterClass(&wc);
 }
 
-HWND PipWindow::CreatePip(HINSTANCE hInstance, int x, int y, int w, int h, HBITMAP image)
+HWND PipWindow::CreatePip(HINSTANCE hInstance, HWND mainWindow, int x, int y, int w, int h, HBITMAP image)
 {
 	// This will be deleted when the window receives the destroy message
 	PipData* data = new PipData{};
@@ -55,7 +55,7 @@ HWND PipWindow::CreatePip(HINSTANCE hInstance, int x, int y, int w, int h, HBITM
 
 	TrackMouseEvent(&tme);
 
-	data->hwnd = hwnd;
+	data->mainWin = mainWindow;
 	data->tme = tme;
 	data->image = image;
 
