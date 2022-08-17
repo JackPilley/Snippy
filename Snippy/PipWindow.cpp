@@ -13,6 +13,7 @@ void PipWindow::InitClass(HINSTANCE hInstance)
 	wc.hInstance = hInstance;
 	wc.lpszClassName = CLASS_NAME;
 	wc.hCursor = hArrowCursor;
+	wc.style = CS_DBLCLKS | CS_VREDRAW | CS_HREDRAW;
 
 	RegisterClass(&wc);
 }
@@ -25,7 +26,7 @@ HWND PipWindow::CreatePip(HINSTANCE hInstance, HWND mainWindow, int x, int y, in
 	HWND hwnd = CreateWindowEx(
 		0,
 		CLASS_NAME,
-		L"Pip Window",
+		L"Snippy Pip",
 		// Borderless and non-resizeable
 		WS_POPUP|WS_SYSMENU,
 		//WS_OVERLAPPEDWINDOW,
@@ -94,23 +95,32 @@ LRESULT CALLBACK PipWindow::PipWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
 	{
 		PAINTSTRUCT ps;
 		HDC hdc = BeginPaint(hwnd, &ps);
-		FillRect(hdc, &ps.rcPaint, (HBRUSH)(COLOR_WINDOW + 1));
 		
 		HDC memDC = CreateCompatibleDC(hdc);
 		HGDIOBJ old = SelectObject(memDC, data->image);
 
 		RECT rect = {};
 
-		GetWindowRect(hwnd, &rect);
+		GetClientRect(hwnd, &rect);
 		int w = rect.right - rect.left;
 		int h = rect.bottom - rect.top;
 
-		BitBlt(
+		int srcW = GetDeviceCaps(memDC, HORZRES);
+		int srcH = GetDeviceCaps(memDC, VERTRES);
+
+		BITMAP bitmap = {};
+
+		GetObject(data->image, sizeof(BITMAP), &bitmap);
+
+		SetStretchBltMode(hdc, STRETCH_HALFTONE);
+
+		StretchBlt(
 			hdc,
 			0, 0,
 			w, h,
 			memDC,
 			0, 0,
+			bitmap.bmWidth, bitmap.bmHeight,
 			SRCCOPY
 		);
 
@@ -118,8 +128,9 @@ LRESULT CALLBACK PipWindow::PipWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
 		DeleteObject(memDC);
 
 		EndPaint(hwnd, &ps);
-	}
+
 		return 0;
+	}
 	case WM_MOUSEMOVE:
 	{
 		// If the mouse is entering the window after leaving it
@@ -172,6 +183,28 @@ LRESULT CALLBACK PipWindow::PipWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
 	case WM_MBUTTONDOWN:
 	{
 		DestroyWindow(hwnd);
+		return 0;
+	}
+	case WM_SYSKEYUP:
+	{
+		if (wParam == VK_MENU || wParam == VK_F10)
+		{
+	// Skip checking keycodes if it's a double click event
+	case WM_LBUTTONDBLCLK:
+			if (data->titleBarShown)
+			{
+				SetWindowLongPtr(hwnd, GWL_STYLE, WS_POPUP | WS_SYSMENU);
+			}
+			else
+			{
+				SetWindowLongPtr(hwnd, GWL_STYLE, WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME);
+			}
+
+			SetWindowPos(hwnd, NULL, 0, 0, 0, 0, SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOMOVE);
+
+			data->titleBarShown = !data->titleBarShown;
+			
+		}
 		return 0;
 	}
 	default:

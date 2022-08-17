@@ -25,6 +25,8 @@ namespace PipWindow
 		bool mouseDown;
 
 		HBITMAP image;
+
+		bool titleBarShown;
 	};
 
 	const wchar_t CLASS_NAME[] = L"PipClass";
