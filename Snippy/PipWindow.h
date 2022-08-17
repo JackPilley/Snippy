@@ -31,13 +31,9 @@ namespace PipWindow
 
 	const wchar_t CLASS_NAME[] = L"PipClass";
 	const int MIN_SIZE = 50;
-	//We need to set the cursor when it enters the window
-	extern HCURSOR hArrowCursor;
 
 	// Registers the window class with the OS. Should be called only once.
 	void InitClass(HINSTANCE hInstance);
 	// Create an instance of a pip window
 	HWND CreatePip(HINSTANCE hInstance, HWND mainWindow, int x, int y, int w, int h, HBITMAP image);
-	// Message handling for pip windows
-	LRESULT CALLBACK PipWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 }

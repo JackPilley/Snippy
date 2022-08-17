@@ -124,6 +124,29 @@ namespace MainWindow
 			}
 			return 0;
 		}
+		case WM_PAINT:
+		{
+			PAINTSTRUCT ps = {};
+			HDC hdc = BeginPaint(hwnd, &ps);
+
+			HDC bufferDC = CreateCompatibleDC(hdc);
+			HGDIOBJ oldBufferSelection = SelectObject(bufferDC, data->buffer);
+
+			BitBlt(
+				hdc,
+				0, 0,
+				GetDeviceCaps(hdc, HORZRES), GetDeviceCaps(hdc, VERTRES),
+				bufferDC,
+				0, 0,
+				SRCCOPY
+			);
+
+			SelectObject(bufferDC, oldBufferSelection);
+			DeleteObject(bufferDC);
+
+			EndPaint(hwnd, &ps);
+			return 0;
+		}
 		case WM_MOUSEMOVE:
 		{
 			if (data->mouseDown)
@@ -265,7 +288,6 @@ namespace MainWindow
 		data.previousX = endX = GET_X_LPARAM(lParam);
 		data.previousY = endY = GET_Y_LPARAM(lParam);
 
-		//Make sure there's room for the close button
 		w = endX - originX;
 		h = endY - originY;
 
