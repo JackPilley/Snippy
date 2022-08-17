@@ -131,6 +131,13 @@ LRESULT CALLBACK PipWindow::PipWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
 
 		return 0;
 	}
+	case WM_GETMINMAXINFO:
+	{
+		MINMAXINFO* info = (MINMAXINFO*)lParam;
+		info->ptMinTrackSize.y = MIN_SIZE;
+
+		return 0;
+	}
 	case WM_MOUSEMOVE:
 	{
 		// If the mouse is entering the window after leaving it
