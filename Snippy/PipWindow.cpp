@@ -129,7 +129,7 @@ namespace PipWindow
 			);
 
 			SelectObject(memDC, old);
-			DeleteObject(memDC);
+			DeleteDC(memDC);
 
 			EndPaint(hwnd, &ps);
 
@@ -200,20 +200,20 @@ namespace PipWindow
 		{
 			if (wParam == VK_MENU || wParam == VK_F10)
 			{
-				// Skip checking keycodes if it's a double click event
+					// Skip checking keycodes if it's a double click event
 		case WM_LBUTTONDBLCLK:
-			if (data->titleBarShown)
-			{
-				SetWindowLongPtr(hwnd, GWL_STYLE, WS_POPUP | WS_SYSMENU);
-			}
-			else
-			{
-				SetWindowLongPtr(hwnd, GWL_STYLE, WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME);
-			}
+				if (data->titleBarShown)
+				{
+					SetWindowLongPtr(hwnd, GWL_STYLE, WS_POPUP | WS_SYSMENU);
+				}
+				else
+				{
+					SetWindowLongPtr(hwnd, GWL_STYLE, WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME);
+				}
 
-			SetWindowPos(hwnd, NULL, 0, 0, 0, 0, SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOMOVE);
+				SetWindowPos(hwnd, NULL, 0, 0, 0, 0, SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOMOVE);
 
-			data->titleBarShown = !data->titleBarShown;
+				data->titleBarShown = !data->titleBarShown;
 
 			}
 			return 0;

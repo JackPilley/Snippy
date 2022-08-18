@@ -142,7 +142,7 @@ namespace MainWindow
 			);
 
 			SelectObject(bufferDC, oldBufferSelection);
-			DeleteObject(bufferDC);
+			DeleteDC(bufferDC);
 
 			EndPaint(hwnd, &ps);
 			return 0;
@@ -237,7 +237,7 @@ namespace MainWindow
 		);
 
 		SelectObject(memDC, old);
-		DeleteObject(memDC);
+		DeleteDC(memDC);
 
 		ReleaseDC(NULL, screen);
 		ReleaseDC(hwnd, window);
@@ -294,14 +294,23 @@ namespace MainWindow
 		w = w >= 0 ? max(w, PipWindow::MIN_SIZE) : min(w, -PipWindow::MIN_SIZE);
 		h = h >= 0 ? max(h, PipWindow::MIN_SIZE) : min(h, -PipWindow::MIN_SIZE);
 
-		BitBlt(
+		LOGBRUSH lb = {};
+
+		//HPEN pen = ExtCreatePen(PS_GEOMETRIC | PS_DASH | PS_ENDCAP_FLAT | PS_JOIN_BEVEL,
+		//	3, &lb, 0, NULL);
+
+		//HGDIOBJ oldPen = SelectObject(bufferDC, pen);
+
+		Rectangle(bufferDC, originX, originY, originX + w, originY + h);
+
+		/*BitBlt(
 			bufferDC,
 			originX, originY,
 			w, h,
 			imageDC,
 			originX, originY,
 			SRCINVERT
-		);
+		);*/
 
 		BitBlt(
 			hdc,
@@ -312,11 +321,16 @@ namespace MainWindow
 			SRCCOPY
 		);
 
-		SelectObject(imageDC, oldImageSelection);
-		DeleteObject(imageDC);
 
+		SelectObject(imageDC, oldImageSelection);
+		DeleteDC(imageDC);
+		
+		//SelectObject(bufferDC, oldPen);
 		SelectObject(bufferDC, oldBufferSelection);
-		DeleteObject(bufferDC);
+		DeleteDC(bufferDC);
+		//DeleteObject(pen);
+
+		ReleaseDC(hwnd, hdc);
 	}
 
 	void TakeAndDisplayScreenShot(MainData& data, HWND hwnd, LPARAM lParam)
@@ -371,13 +385,14 @@ namespace MainWindow
 
 		SelectObject(memDC, oldMem);
 		SelectObject(cropDC, oldCrop);
-		DeleteObject(memDC);
-		DeleteObject(cropDC);
+		DeleteDC(memDC);
+		DeleteDC(cropDC);
 
 		ReleaseDC(hwnd, window);
 
 		ShowWindow(hwnd, SW_HIDE);
 		DeleteObject(data.image);
+		DeleteObject(data.buffer);
 		data.windowShown = false;
 
 		SetPipVisibility(data, true);
