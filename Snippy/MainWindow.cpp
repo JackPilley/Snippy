@@ -301,16 +301,16 @@ namespace MainWindow
 
 		//HGDIOBJ oldPen = SelectObject(bufferDC, pen);
 
-		Rectangle(bufferDC, originX, originY, originX + w, originY + h);
+		//Rectangle(bufferDC, originX, originY, originX + w, originY + h);
 
-		/*BitBlt(
+		BitBlt(
 			bufferDC,
 			originX, originY,
 			w, h,
 			imageDC,
 			originX, originY,
-			SRCINVERT
-		);*/
+			PATINVERT
+		);
 
 		BitBlt(
 			hdc,
