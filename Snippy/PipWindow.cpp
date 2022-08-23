@@ -53,7 +53,7 @@ namespace PipWindow
 			return hwnd;
 		}
 
-		ShowWindow(hwnd, SW_SHOWDEFAULT);
+		ShowWindow(hwnd, SW_NORMAL);
 
 		//Track when the mouse leaves the window
 		TRACKMOUSEEVENT tme = {};
@@ -214,7 +214,7 @@ namespace PipWindow
 					SetWindowLongPtr(hwnd, GWL_STYLE, WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME);
 				}
 
-				SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOMOVE);
+				SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOMOVE | SWP_FRAMECHANGED);
 
 				data->titleBarShown = !data->titleBarShown;
 
