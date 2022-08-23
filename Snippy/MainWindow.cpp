@@ -104,6 +104,7 @@ namespace MainWindow
 		case WM_NOTIF_ICON_MSG:
 			switch (LOWORD(lParam))
 			{
+			case WM_LBUTTONUP:
 			case WM_CONTEXTMENU:
 			{
 				POINT const pt = { LOWORD(wParam), HIWORD(wParam) };

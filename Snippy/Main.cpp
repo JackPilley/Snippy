@@ -53,7 +53,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 		notifyIconData.uFlags |= NIF_INFO;
 		notifyIconData.dwInfoFlags |= NIIF_NONE;
 		StringCchCopy(notifyIconData.szInfoTitle, sizeof(notifyIconData.szInfoTitle), L"Snippy is ready!");
-		StringCchCopy(notifyIconData.szInfo, sizeof(notifyIconData.szInfo), L"Press Ctrl-Shift-W to take a screen shot.");
+		StringCchCopy(notifyIconData.szInfo, sizeof(notifyIconData.szInfo), L"Press Ctrl-Shift-W to take a screen shot.\nSnippy will keep running in the background.");
 	}
 
 	Shell_NotifyIcon(NIM_ADD, &notifyIconData);
