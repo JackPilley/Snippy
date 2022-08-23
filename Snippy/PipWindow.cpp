@@ -41,7 +41,7 @@ namespace PipWindow
 			x, y,
 			w, h,
 
-			NULL,
+			mainWindow,
 			NULL,
 			hInstance,
 			data
