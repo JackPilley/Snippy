@@ -7,6 +7,7 @@
 #include <windowsx.h>
 #include <shellapi.h>
 #include <WinUser.h>
+#include <strsafe.h>
 
 #include <iostream>
 
@@ -37,10 +38,22 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 	notifyIconData.cbSize = sizeof(notifyIconData);
 	notifyIconData.uID = 1;
 	notifyIconData.hWnd = hwnd;
-	notifyIconData.uFlags = NIF_ICON | NIF_TIP | NIF_MESSAGE;
+	notifyIconData.uFlags = NIF_ICON | NIF_TIP | NIF_SHOWTIP | NIF_MESSAGE;
 	notifyIconData.uCallbackMessage = WM_NOTIF_ICON_MSG;
+	StringCchCopy(notifyIconData.szTip, sizeof(notifyIconData.szTip), L"Snippy");
 	notifyIconData.hIcon = icon;
 	notifyIconData.uVersion = NOTIFYICON_VERSION_4;
+
+	// Todo: Make this only true on the first run
+	bool showStartupMessage = true;
+
+	if (showStartupMessage)
+	{
+		notifyIconData.uFlags |= NIF_INFO;
+		notifyIconData.dwInfoFlags |= NIIF_NONE;
+		StringCchCopy(notifyIconData.szInfoTitle, sizeof(notifyIconData.szInfoTitle), L"Snippy is ready!");
+		StringCchCopy(notifyIconData.szInfo, sizeof(notifyIconData.szInfo), L"Press Ctrl Shift W to take a screen shot.");
+	}
 
 	Shell_NotifyIcon(NIM_ADD, &notifyIconData);
 	Shell_NotifyIcon(NIM_SETVERSION, &notifyIconData);
