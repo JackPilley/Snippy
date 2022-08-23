@@ -11,6 +11,8 @@
 
 #include <iostream>
 
+#include "resource.h"
+
 #include "MainWindow.h"
 #include "PipWindow.h"
 
@@ -30,8 +32,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 
 	HWND hwnd = MainWindow::CreateMainWindow(hInstance);
 
-	//To do, custom icon
-	HICON icon = LoadIcon(NULL, IDI_QUESTION);
+	HICON icon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_ICON1));
 
 	//Set up notification icon (tray icon)
 	NOTIFYICONDATA notifyIconData = {};
@@ -52,7 +53,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 		notifyIconData.uFlags |= NIF_INFO;
 		notifyIconData.dwInfoFlags |= NIIF_NONE;
 		StringCchCopy(notifyIconData.szInfoTitle, sizeof(notifyIconData.szInfoTitle), L"Snippy is ready!");
-		StringCchCopy(notifyIconData.szInfo, sizeof(notifyIconData.szInfo), L"Press Ctrl Shift W to take a screen shot.");
+		StringCchCopy(notifyIconData.szInfo, sizeof(notifyIconData.szInfo), L"Press Ctrl-Shift-W to take a screen shot.");
 	}
 
 	Shell_NotifyIcon(NIM_ADD, &notifyIconData);

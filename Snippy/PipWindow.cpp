@@ -2,6 +2,8 @@
 #include <windowsx.h>
 #include <iostream>
 
+#include "resource.h"
+
 namespace PipWindow
 {
 	HCURSOR hArrowCursor = {};
@@ -18,6 +20,7 @@ namespace PipWindow
 		wc.lpszClassName = CLASS_NAME;
 		wc.hCursor = hArrowCursor;
 		wc.style = CS_DBLCLKS | CS_VREDRAW | CS_HREDRAW;
+		wc.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_ICON1));
 
 		RegisterClass(&wc);
 	}
