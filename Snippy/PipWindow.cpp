@@ -1,3 +1,6 @@
+// Copyright 2022 Jack Pilley
+// Distributed under the MIT license. See the LICENSE file in the project root for more information.
+
 #include "PipWindow.h"
 #include <windowsx.h>
 #include <iostream>
