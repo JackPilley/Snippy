@@ -209,14 +209,16 @@ namespace MainWindow
 		int w = GetSystemMetrics(SM_CXVIRTUALSCREEN);
 		int h = GetSystemMetrics(SM_CYVIRTUALSCREEN);
 
+		HWND desktopWindow = GetDesktopWindow();
+
 		// Save a copy of the current screen image
-		HDC screen = GetDC(NULL);
+		HDC desktop = GetDC(desktopWindow);
 		HDC window = GetDC(hwnd);
 
 		HDC memDC = CreateCompatibleDC(window);
 
-		HBITMAP bitmap = CreateCompatibleBitmap(screen, w, h);
-		HBITMAP buffer = CreateCompatibleBitmap(screen, w, h);
+		HBITMAP bitmap = CreateCompatibleBitmap(desktop, w, h);
+		HBITMAP buffer = CreateCompatibleBitmap(desktop, w, h);
 
 		HGDIOBJ old = SelectObject(memDC, bitmap);
 
@@ -224,7 +226,7 @@ namespace MainWindow
 			memDC,
 			0, 0,
 			w, h,
-			screen,
+			desktop,
 			0, 0,
 			SRCCOPY
 		);
@@ -235,7 +237,7 @@ namespace MainWindow
 			memDC,
 			0, 0,
 			w, h,
-			screen,
+			desktop,
 			0, 0,
 			SRCCOPY
 		);
@@ -243,12 +245,13 @@ namespace MainWindow
 		SelectObject(memDC, old);
 		DeleteDC(memDC);
 
-		ReleaseDC(NULL, screen);
+		ReleaseDC(desktopWindow, desktop);
 		ReleaseDC(hwnd, window);
 
 		data.image = bitmap;
 		data.buffer = buffer;
 
+		SetActiveWindow(hwnd);
 
 		SetWindowPos(
 			hwnd,
@@ -324,7 +327,6 @@ namespace MainWindow
 			0, 0,
 			SRCCOPY
 		);
-
 
 		SelectObject(imageDC, oldImageSelection);
 		DeleteDC(imageDC);
