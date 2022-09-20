@@ -319,10 +319,15 @@ namespace MainWindow
 			PATINVERT
 		);
 
+		//Get the size of the window. Ideally we'd get the size from the device context, but for some reason the number returned is the resolution of the
+		//main monitor. So instead we use the resolution of the window. It should be the same.
+		RECT clientRect = {};
+		GetClientRect(hwnd, &clientRect);
+
 		BitBlt(
 			hdc,
 			0, 0,
-			GetDeviceCaps(hdc, HORZRES), GetDeviceCaps(hdc, VERTRES),
+			clientRect.right, clientRect.bottom,
 			bufferDC,
 			0, 0,
 			SRCCOPY
