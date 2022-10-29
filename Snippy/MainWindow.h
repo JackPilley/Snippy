@@ -34,6 +34,6 @@ namespace MainWindow
 
 	// Registers the window class with the OS. Should be called only once.
 	void InitClass(HINSTANCE hInstance);
-	// Create an instance of a pip window
+	// Create an instance of the main window. There should really only be one instance of this window
 	HWND CreateMainWindow(HINSTANCE hInstance);
 }
